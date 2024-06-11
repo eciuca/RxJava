@@ -408,4 +408,34 @@ public class LambdaObserverTest extends RxJavaTest {
             RxJavaPlugins.reset();
         }
     }
+
+    @Test
+    public void onErrorComingFromOnNextShouldBeObservableErrorHandler() {
+        List<Throwable> errors = TestHelper.trackPluginErrors();
+        try {
+            final List<Throwable> observerErrors = Collections.synchronizedList(new ArrayList<>());
+
+            LambdaObserver<Integer> o = new LambdaObserver<>(new Consumer<Integer>() {
+                @Override
+                public void accept(Integer v) {
+                    throw new TestException();
+                }
+            },
+                    new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable t) {
+                            observerErrors.add(t);
+                        }
+                    },
+                    Functions.EMPTY_ACTION,
+                    Functions.<Disposable>emptyConsumer());
+
+            o.onNext(1);
+
+            TestHelper.assertError(observerErrors, 0, TestException.class);
+            assertTrue(errors.isEmpty());
+        } finally {
+            RxJavaPlugins.reset();
+        }
+    }
 }

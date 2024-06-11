@@ -63,7 +63,10 @@ public final class LambdaObserver<T> extends AtomicReference<Disposable>
                 onNext.accept(t);
             } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
-                get().dispose();
+                Disposable d = get();
+                if (d != null) {
+                    d.dispose();
+                }
                 onError(e);
             }
         }
